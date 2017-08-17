@@ -258,14 +258,51 @@ public class NQApduServiceInfo extends ApduServiceInfo implements Parcelable {
             mNfcid2s = new ArrayList<String>();
 
             final int depth = parser.getDepth();
-
+            NQAidGroup.ApduPatternGroup currNQApduPatternGroup = null;
             Nfcid2Group currentNfcid2Group = null;
 
             // Parsed values for the current AID group
             while (((eventType = parser.next()) != XmlPullParser.END_TAG || parser.getDepth() > depth)
                     && eventType != XmlPullParser.END_DOCUMENT) {
                 tagName = parser.getName();
-                if (eventType == XmlPullParser.START_TAG && "nfcid2-group".equals(tagName) &&
+                if (!onHost && eventType == XmlPullParser.START_TAG && "apdu-pattern-group".equals(tagName) &&
+                    currNQApduPatternGroup == null) {
+                    Log.e(TAG, "apdu-pattern-group");
+                    final TypedArray groupAttrs = res.obtainAttributes(attrs,
+                            com.android.internal.R.styleable.ApduPatternGroup);
+                    String groupDescription = groupAttrs.getString(
+                            com.android.internal.R.styleable.ApduPatternGroup_description);
+                    NQAidGroup nqAidGroup = mStaticNQAidGroups.get(CardEmulation.CATEGORY_OTHER);
+                    currNQApduPatternGroup = new NQAidGroup.ApduPatternGroup(groupDescription);
+                    groupAttrs.recycle();
+                } else if (!onHost && eventType == XmlPullParser.END_TAG && "apdu-pattern-group".equals(tagName) &&
+                    currNQApduPatternGroup != null) {
+                    if(currNQApduPatternGroup.getApduPattern().size() > 0x00) {
+                        mStaticNQAidGroups.get(CardEmulation.CATEGORY_OTHER).addApduGroup(currNQApduPatternGroup);
+                    }
+                    Log.e(TAG, "apdu-pattern-group end");
+                } else if (!onHost && eventType == XmlPullParser.START_TAG && "apdu-pattern-filter".equals(tagName) &&
+                    currNQApduPatternGroup != null) {
+                    /*
+                    final TypedArray a = res.obtainAttributes(attrs,
+                            com.android.internal.R.styleable.ApduPatternFilter);
+                    String reference_data = a.getString(com.android.internal.R.styleable.ApduPatternFilter_reference_data).
+                            //toUpperCase();
+                    String mask = a.getString(com.android.internal.R.styleable.ApduPatternFilter_apdupattern_mask).
+                            toUpperCase();
+                    String description = a.getString(com.android.internal.R.styleable.ApduPatternFilter_description).
+                            toUpperCase();
+                    if (CardEmulation.isValidApduString(reference_data) && CardEmulation.isValidApduString(mask)) {
+                        NxpAidGroup.ApduPattern apdu = mStaticNxpAidGroups.get(CardEmulation.CATEGORY_OTHER).new ApduPattern(reference_data, mask,description);
+                        currApduPatternGroup.addApduPattern(apdu);
+                    } else {
+                        Log.e(TAG, "Ignoring invalid apdu pattern: " + reference_data);
+                    }
+                    Log.e(TAG, "valid apdu pattern"+ reference_data+mask+description);
+
+                    a.recycle();
+                                        */
+                } else if (eventType == XmlPullParser.START_TAG && "nfcid2-group".equals(tagName) &&
                         currentNfcid2Group == null) {
                     final TypedArray groupAttrs = res.obtainAttributes(attrs,
                             com.android.internal.R.styleable.AidGroup);
@@ -392,7 +429,13 @@ public class NQApduServiceInfo extends ApduServiceInfo implements Parcelable {
                 extParser.close();
             }
         }else {
-            mSeExtension = new ESeInfo(-1, 0);
+            if(!onHost) {
+                Log.e(TAG, "SE extension not present, Setting default offhost seID");
+                mSeExtension = new ESeInfo(SECURE_ELEMENT_ROUTE_UICC, 0);
+            }
+            else {
+                mSeExtension = new ESeInfo(-1, 0);
+            }
             mFelicaExtension = new FelicaInfo(null, null);
         }
     }
