@@ -288,9 +288,6 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
         public void writeToParcel(Parcel dest, int flags) {
             dest.writeString(description);
             dest.writeInt(apduList.size());
-            if (apduList.size() > 0) {
-                //dest.writeStringList(apduList);
-            }
         }
 
         @Override
@@ -307,10 +304,6 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
                 int listSize = source.readInt();
                 ArrayList<ApduPattern> apduList = new ArrayList<ApduPattern>();
                 ApduPatternGroup apduGroup = new ApduPatternGroup(description);
-                if (listSize > 0) {
-                    //source.readStringList(apduList);
-                }
-                //apduGroup.addApduPattern(apduList);
                 return apduGroup;
             }
 

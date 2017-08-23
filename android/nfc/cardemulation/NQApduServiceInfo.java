@@ -268,13 +268,13 @@ public class NQApduServiceInfo extends ApduServiceInfo implements Parcelable {
                 if (!onHost && eventType == XmlPullParser.START_TAG && "apdu-pattern-group".equals(tagName) &&
                     currNQApduPatternGroup == null) {
                     Log.e(TAG, "apdu-pattern-group");
-                    final TypedArray groupAttrs = res.obtainAttributes(attrs,
+                   /* final TypedArray groupAttrs = res.obtainAttributes(attrs,
                             com.android.internal.R.styleable.ApduPatternGroup);
                     String groupDescription = groupAttrs.getString(
                             com.android.internal.R.styleable.ApduPatternGroup_description);
                     NQAidGroup nqAidGroup = mStaticNQAidGroups.get(CardEmulation.CATEGORY_OTHER);
                     currNQApduPatternGroup = new NQAidGroup.ApduPatternGroup(groupDescription);
-                    groupAttrs.recycle();
+                    groupAttrs.recycle();*/
                 } else if (!onHost && eventType == XmlPullParser.END_TAG && "apdu-pattern-group".equals(tagName) &&
                     currNQApduPatternGroup != null) {
                     if(currNQApduPatternGroup.getApduPattern().size() > 0x00) {
