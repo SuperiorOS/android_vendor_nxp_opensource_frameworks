@@ -14,8 +14,8 @@ LOCAL_MODULE_CLASS := JAVA_LIBRARIES
 LOCAL_MODULE_PATH := $(TARGET_OUT_JAVA_LIBRARIES)
 
 LOCAL_SRC_FILES := \
-	$(call all-Iaidl-files-under, com) \
-	$(call all-java-files-under, com) \
+	$(call all-Iaidl-files-under, com/nxp) \
+	$(call all-java-files-under, com/nxp) \
 	$(call all-java-files-under, android)
 
 LOCAL_CERTIFICATE := platform
@@ -42,8 +42,8 @@ include $(BUILD_PREBUILT)
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
-	$(call all-Iaidl-files-under, com) \
-	$(call all-java-files-under, com) \
+	$(call all-Iaidl-files-under, com/nxp) \
+	$(call all-java-files-under, com/nxp) \
 	$(call all-html-files-under, com) \
 	$(call all-java-files-under, android) \
 	$(call all-html-files-under, android)

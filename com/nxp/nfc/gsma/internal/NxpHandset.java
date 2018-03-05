@@ -81,9 +81,9 @@ public class NxpHandset {
         if((mNxpNfcAdapter == null) && (mNfcAdapter != null))
             mNxpNfcAdapter = NxpNfcAdapter.getNxpNfcAdapter(mNfcAdapter);
 
-        if(mNfcControllerService == null) {
+        /*if(mNfcControllerService == null) {
             mNfcControllerService = mNxpNfcAdapter.getNxpNfcControllerInterface();
-        }
+        }*/
     }
 
     private Context getContext() {
@@ -152,11 +152,11 @@ public class NxpHandset {
         case BATTERY_LOW_MODE:
         case BATTERY_POWER_OFF_MODE:
         case BATTERY_OPERATIONAL_MODE:
-            try {
+            /*try {
                 secureElemArray = mNxpNfcAdapter.getActiveSecureElementList(pkg);
             } catch(IOException e) {
                 secureElemArray = null;
-            }
+            }*/
             break;
         default:
             throw new IllegalArgumentException("Wrong value for batteryLevel");

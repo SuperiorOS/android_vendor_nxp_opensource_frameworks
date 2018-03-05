@@ -150,9 +150,9 @@ public class NxpNfcController {
         if((mNxpNfcAdapter == null) && (mNfcAdapter != null))
             mNxpNfcAdapter = NxpNfcAdapter.getNxpNfcAdapter(mNfcAdapter);
 
-        if(mNfcControllerService == null) {
+        /*if(mNfcControllerService == null) {
             mNfcControllerService = mNxpNfcAdapter.getNxpNfcControllerInterface();
-        }
+        }*/
     }
 
     /**
