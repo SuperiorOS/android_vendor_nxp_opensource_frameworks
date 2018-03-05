@@ -16,12 +16,7 @@
 package com.nxp.nfc;
 
 
-import com.nxp.nfc.INxpNfcDta;
-import com.nxp.nfc.INxpNfcAccessExtras;
 import com.nxp.nfc.INxpNfcAdapterExtras;
-import com.nxp.nfc.INfcVzw;
-import com.nxp.intf.IeSEClientServicesAdapter;
-import com.nxp.nfc.gsma.internal.INxpNfcController;
 
 /**
  * @hide
@@ -29,27 +24,5 @@ import com.nxp.nfc.gsma.internal.INxpNfcController;
 interface INxpNfcAdapter
 {
 
-    INxpNfcDta getNfcDtaInterface();
-    INxpNfcAccessExtras getNxpNfcAccessExtrasInterface(in String pkg);
-    INfcVzw getNfcVzwInterface();
     INxpNfcAdapterExtras getNxpNfcAdapterExtrasInterface();
-    INxpNfcController getNxpNfcControllerInterface();
-    int[] getSecureElementList(String pkg);
-    int getSelectedSecureElement(String pkg);
-    int selectSecureElement(String pkg,int seId);
-    int deselectSecureElement(String pkg);
-    void storeSePreference(int seId);
-    int setEmvCoPollProfile(boolean enable, int route);
-    void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
-    void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
-    void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
-    IeSEClientServicesAdapter getNfcEseClientServicesAdapterInterface();
-    int getSeInterface(int type);
-    byte[]  getFWVersion();
-    Map getServicesAidCacheSize(int userId, String category);
-    int getMaxAidRoutingTableSize();
-    int getCommittedAidRoutingTableSize();
-    int[] getActiveSecureElementList(String pkg);
-    int updateServiceState(int userId , in Map serviceState);
-    int setConfig(String configs , String pkg);
 }
