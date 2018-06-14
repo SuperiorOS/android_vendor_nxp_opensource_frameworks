@@ -18,7 +18,6 @@
 package com.nxp.nfc;
 
 import android.os.Bundle;
-import com.nxp.intf.IJcopService;
 import android.content.Intent;
 
 /**

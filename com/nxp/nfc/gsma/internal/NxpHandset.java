@@ -56,13 +56,6 @@ public class NxpHandset {
     private static final int BATTERY_POWER_OFF_MODE=0x91;
     /** Device property [Battery levels]*/
     private static final int BATTERY_OPERATIONAL_MODE=0x92;
-
-    public static final String SE_NAME_SIM1 = "SIM1";
-    public static final String SE_NAME_SIM2 = "SIM2";
-    public static final String SE_NAME_ESE1 = "eSE1";
-    public static final String SE_NAME_ESE2 = "eSE2";
-    public static final String SE_NAME_SD1  = "SD1";
-
     private String TAG = "NxpHandset";
 
     private NfcAdapter mNfcAdapter = null;
@@ -81,9 +74,9 @@ public class NxpHandset {
         if((mNxpNfcAdapter == null) && (mNfcAdapter != null))
             mNxpNfcAdapter = NxpNfcAdapter.getNxpNfcAdapter(mNfcAdapter);
 
-        /*if(mNfcControllerService == null) {
+        if(mNfcControllerService == null) {
             mNfcControllerService = mNxpNfcAdapter.getNxpNfcControllerInterface();
-        }*/
+        }
     }
 
     private Context getContext() {
@@ -152,11 +145,11 @@ public class NxpHandset {
         case BATTERY_LOW_MODE:
         case BATTERY_POWER_OFF_MODE:
         case BATTERY_OPERATIONAL_MODE:
-            /*try {
+            try {
                 secureElemArray = mNxpNfcAdapter.getActiveSecureElementList(pkg);
             } catch(IOException e) {
                 secureElemArray = null;
-            }*/
+            }
             break;
         default:
             throw new IllegalArgumentException("Wrong value for batteryLevel");
@@ -187,29 +180,20 @@ public class NxpHandset {
      */
     public void enableMultiEvt_transactionReception() {
         String pkg = mContext.getPackageName();
-        String SEName  = null;
-        List<String> secureElementList;
         boolean isEnabled = false;
         Log.d(TAG,"pkg " + pkg);
         try {
-            secureElementList = getAvailableSecureElements(BATTERY_OPERATIONAL_MODE);
-        } catch (Exception e) {
-            Log.e(TAG, "mNxpNfcAdapater.getActiveSecureElement() : " + e.getMessage());
-            // SecurityException - if the application is not allowed to use this API
-            throw new SecurityException("application is not allowed");
-        }
-        for(int i=0;i<secureElementList.size();i++) {
-            if ((secureElementList.get(i).equals(SE_NAME_SIM1)==true) || (secureElementList.get(i).equals(SE_NAME_SIM2)==true)) {
-            SEName = secureElementList.get(i);
-            Log.e(TAG, " SENamelist[" + i+ "] : " + secureElementList.get(i));
-            }
-        }
+            isEnabled = mNfcControllerService.enableMultiEvt_NxptransactionReception(pkg, "SIM");
 
-       try {
-            mNfcControllerService.enableMultiReception(pkg,SEName);
+            if(!isEnabled) {
+                isEnabled = mNfcControllerService.enableMultiEvt_NxptransactionReception(pkg, "SIM1");
+            }
+
         } catch (RemoteException e) {
             Log.e(TAG, "Exception:commitOffHostService failed", e);
         }
 
+        if(!isEnabled)
+            throw new SecurityException("Application is not allowed to use this API");
     }
 }

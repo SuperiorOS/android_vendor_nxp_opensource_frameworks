@@ -100,8 +100,7 @@ public class NxpNfcController {
          * Called when process for enabling the NFC Controller is finished.
          * @hide
          */
-        public void onGetOffHostService(boolean isLast, boolean isDefault,
-                String description, String seName,int bannerResId,
+        public void onGetOffHostService(boolean isLast, String description, String seName, int bannerResId,
                 List<String> dynamicAidGroupDescriptions,
                 List<android.nfc.cardemulation.AidGroup> dynamicAidGroups);
 
@@ -150,9 +149,9 @@ public class NxpNfcController {
         if((mNxpNfcAdapter == null) && (mNfcAdapter != null))
             mNxpNfcAdapter = NxpNfcAdapter.getNxpNfcAdapter(mNfcAdapter);
 
-        /*if(mNfcControllerService == null) {
+        if(mNfcControllerService == null) {
             mNfcControllerService = mNxpNfcAdapter.getNxpNfcControllerInterface();
-        }*/
+        }
     }
 
     /**
@@ -486,45 +485,32 @@ public class NxpNfcController {
         List<NQApduServiceInfo> apduServices = new ArrayList<NQApduServiceInfo>();
         try {
             apduServices = mNfcControllerService.getOffHostServices(userId, packageName);
-            NQApduServiceInfo defaultApduService = mNfcControllerService.getDefaultOffHostService(userId, packageName);
 
             for(int i =0; i< apduServices.size(); i++) {
 
                 if( i == apduServices.size() - 1 ) {
                     isLast = true;
                 }
-                if( defaultApduService != null && apduServices.get(i).equals(defaultApduService)) {
-                    isDefault = true;
-                }
-
                 seId = apduServices.get(i).getSEInfo().getSeId();
-                if( seId == -1) {
-                    Log.e(TAG,"Wrong SE ID (-1)");
-                    continue;
-                }
-                Log.e(TAG, " SE ID: " + seId);
                 if (NxpConstants.UICC_ID_TYPE == seId) {
-                    seName = "SIM";
+                    seName = "SIM1";
                 } else if (NxpConstants.UICC2_ID_TYPE == seId) {
-                    seName = "SIM";
+                    seName = "SIM2";
+                } else if (NxpConstants.SMART_MX_ID_TYPE == seId) {
+                    seName = "eSE";
                 } else {
+                    seName = null;
                     Log.e(TAG,"Wrong SE ID");
                 }
 
-                if(DBG) Log.d(TAG, "getOffHostServices() : seName: " +seName + " apduServices.get(" + i + ").toString(): "
-                        + apduServices.get(i).toString());
-
+                Log.d(TAG, "getOffHostServices: seName = " + seName);
                 ArrayList<String> groupDescription = new ArrayList<String>();
                 for (NQAidGroup nqaidGroup : apduServices.get(i).getNQAidGroups()) {
                     groupDescription.add(nqaidGroup.getDescription());
                 }
 
-                callbacks.onGetOffHostService(isLast, isDefault, apduServices.get(i).getDescription(), seName, apduServices.get(i).getBannerId(),
-                        groupDescription,
-                        apduServices.get(i).getAidGroups());
-
-                mSeNameApduService.put(seName, apduServices.get(i));
-
+                callbacks.onGetOffHostService(isLast, apduServices.get(i).getDescription(), seName, apduServices.get(i).getBannerId(),
+                        groupDescription, apduServices.get(i).getAidGroups());
             }
         } catch (RemoteException e) {
             Log.e(TAG, "getOffHostServices failed", e);
@@ -553,23 +539,22 @@ public class NxpNfcController {
             seId = apduService.getSEInfo().getSeId();
 	    Log.e(TAG," SE ID: " + seId);
             if (NxpConstants.UICC_ID_TYPE == seId) {
-                seName = "SIM";
+                seName = "SIM1";
             } else if (NxpConstants.UICC2_ID_TYPE == seId) {
-                seName = "SIM";
+                seName = "SIM2";
+            } else if (NxpConstants.SMART_MX_ID_TYPE== seId) {
+                seName = "eSE";
             } else {
                 Log.e(TAG,"Wrong SE ID");
             }
-
-            if(DBG) Log.d(TAG, "getDefaultOffHostService: seName: " + seName + " apduService.toString():" + apduService.toString());
-
+            Log.d(TAG, "getDefaultOffHostService: seName = " + seName);
             ArrayList<String> groupDescription = new ArrayList<String>();
             for (NQAidGroup nqaidGroup : apduService.getNQAidGroups()) {
                 groupDescription.add(nqaidGroup.getDescription());
             }
 
-            callbacks.onGetOffHostService(isLast, isDefault, apduService.getDescription(), seName, apduService.getBannerId(),
-                    groupDescription,
-                    apduService.getAidGroups());
+            callbacks.onGetOffHostService(isLast, apduService.getDescription(), seName, apduService.getBannerId(),
+                    groupDescription, apduService.getAidGroups());
         } catch (RemoteException e) {
             Log.e(TAG, "getDefaultOffHostService failed", e);
             return false;
