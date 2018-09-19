@@ -137,6 +137,20 @@ public final class NxpNfcAdapter {
         }
     }
 
+    /**
+     * Change poll and listen technology
+     * Generic API is use to disable polling and enable speicific listening technology
+     * @param binder,pollTech, listenTech.
+     * @return void
+     * @hide
+     */
+    public void changeDiscoveryTech(IBinder binder, int pollTech, int listenTech) throws IOException {
+        try {
+            sNxpService.changeDiscoveryTech(binder, pollTech, listenTech);
+        } catch (RemoteException e) {
+            Log.e(TAG, "changeDiscoveryTech failed", e);
+        }
+    }
      /**
      * @hide
      */
@@ -278,21 +292,21 @@ public final class NxpNfcAdapter {
             activeSEList = sNxpService.getActiveSecureElementList(pkg);
             if (activeSEList != null && activeSEList.length != 0)
             {
-                arr = new String[activeSEList.length];
+                arr= new String[activeSEList.length];
                 for(int i=0; i<activeSEList.length; i++)
                 {
                     Log.e(TAG, "getActiveSecureElementList activeSE[i]" + activeSEList[i]);
-                    if(activeSEList[i]==NxpConstants.SMART_MX_ID_TYPE)
+                    if(activeSEList[i] == NfcConstants.SMART_MX_ID_TYPE)
                     {
-                        arr[i] = NxpConstants.SMART_MX_ID;
+                        arr[i] = NfcConstants.SMART_MX_ID;
                     }
-                    else if(activeSEList[i]==NxpConstants.UICC_ID_TYPE)
+                    else if(activeSEList[i] == NfcConstants.UICC_ID_TYPE)
                     {
-                        arr[i] = NxpConstants.UICC_ID;
+                        arr[i] = NfcConstants.UICC_ID;
                     }
-                    else if(activeSEList[i] == NxpConstants.UICC2_ID_TYPE)
+                    else if(activeSEList[i] == NfcConstants.UICC2_ID_TYPE)
                     {
-                        arr[i] = NxpConstants.UICC2_ID;
+                        arr[i] = NfcConstants.UICC2_ID;
                     }
                     else {
                         throw new IOException("No Secure Element Activeted");
@@ -306,6 +320,110 @@ public final class NxpNfcAdapter {
             Log.e(TAG, "getActiveSecureElementList: failed", e);
             attemptDeadServiceRecovery(e);
             throw new IOException("Failure in deselecting the selected Secure Element");
+        }
+    }
+
+    /**
+     * Get the current NFCC firware version.
+     * @return 2 byte array with Major ver(0 index) adn Minor ver(1 index)
+     */
+    public byte[] getFwVersion() throws IOException
+    {
+        try{
+            return sNxpService.getFWVersion();
+        }
+        catch(RemoteException e)
+        {
+            Log.e(TAG, "RemoteException in getFwVersion(): ", e);
+            attemptDeadServiceRecovery(e);
+            throw new IOException("RemoteException in getFwVersion()");
+        }
+    }
+
+    public byte[] readerPassThruMode(byte status, byte modulationTyp)
+        throws IOException {
+      try {
+        return sNxpService.readerPassThruMode(status, modulationTyp);
+      } catch (RemoteException e) {
+        Log.e(TAG, "Remote exception in readerPassThruMode(): ", e);
+        throw new IOException("Remote exception in readerPassThruMode()");
+      }
+    }
+
+    public byte[] transceiveAppData(byte[] data) throws IOException {
+      try {
+        return sNxpService.transceiveAppData(data);
+      } catch (RemoteException e) {
+        Log.e(TAG, "RemoteException in transceiveAppData(): ", e);
+        throw new IOException("RemoteException in transceiveAppData()");
+      }
+    }
+    /**
+     * This api is called by applications to update the NFC configurations which are
+     * already part of libnfc-nxp.conf and libnfc-brcm.conf
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only Nfcservice is enabled.
+     * <li>This api shall be called only when there are no NFC transactions ongoing
+     * </ul>
+     * @param  configs NFC Configuration to be updated.
+     * @param  pkg package name of the caller
+     * @return whether  the update of configuration is
+     *          success or not.
+     *          0xFF - failure
+     *          0x00 - success
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public int setConfig(String configs , String pkg) throws IOException {
+        try {
+            return sNxpService.setConfig(configs , pkg);
+        } catch(RemoteException e) {
+            e.printStackTrace();
+            attemptDeadServiceRecovery(e);
+            return 0xFF;
+        }
+    }
+    /**
+     * This api is called by applications to select the UICC slot. Selected Slot
+     * will be activated for all type of CE from UICC.
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only Nfcservice is enabled.
+     * </ul>
+     * @param  uicc slot number to select
+     * @return whether  the update of configuration is
+     *          success or not.
+     *          0xFF - failure
+     *          0x00 - success
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public int selectUicc(int uiccSlot) throws IOException {
+        try {
+            return sNxpService.selectUicc(uiccSlot);
+        } catch(RemoteException e) {
+            e.printStackTrace();
+            attemptDeadServiceRecovery(e);
+            return 0xFF;
+        }
+    }
+    /**
+     * This api is called by applications to get Selected UICC slot. Selected Slot
+     * will be used for all type of CE from UICC.
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only Nfcservice is enabled.
+     * </ul>
+     * @param  uicc slot number to select
+     * @return whether  the update of configuration is
+     *          success or not.
+     *          0xFF - failure
+     *          0x00 - success
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public int getSelectedUicc() throws IOException {
+        try {
+            return sNxpService.getSelectedUicc();
+        } catch(RemoteException e) {
+            e.printStackTrace();
+            attemptDeadServiceRecovery(e);
+            return 0xFF;
         }
     }
 }

@@ -35,67 +35,42 @@ import android.util.Log;
 import java.lang.reflect.Field;
 
 /**
- * The NQAidGroup class represents a group of Application Identifiers (AIDs).
- *
- * <p>The format of AIDs is defined in the ISO/IEC 7816-4 specification. This class
- * requires the AIDs to be input as a hexadecimal string, with an even amount of
- * hexadecimal characters, e.g. "F014811481".
- *
- * Note: While this class extends AidGroup, it has no access to protected fields/methods of the super class
- * as it is built in a different compile unit.
- *
  * @hide
  */
-public final class NQAidGroup extends AidGroup implements Parcelable {
+public final class NfcAidGroup extends AidGroup implements Parcelable {
+
+    static final String TAG = "NfcAidGroup";
     /**
-     * The maximum number of AIDs that can be present in any one group.
+     * Mapping from category to static APDU pattern group
      */
-    public static final int MAX_NUM_AIDS = 256;
+    protected ArrayList<ApduPatternGroup> mStaticApduPatternGroups;
 
-    static final String TAG = "NQAidGroup";
-    final String nqdescription;
-
-
-    /**
-     * Creates a new NQAidGroup object.
-     *
-     * @param aids The list of AIDs present in the group
-     * @param category The category of this group, e.g. {@link CardEmulation#CATEGORY_PAYMENT}
-     */
-    protected ArrayList<ApduPatternGroup> mStaticNQApduPatternGroups;
-    public NQAidGroup(List<String> aids, String category, String description) {
-        super(aids,category);
-        this.nqdescription = description;
-        this.mStaticNQApduPatternGroups = new ArrayList<ApduPatternGroup>();
-    }
-
-    /**
-     * Creates a new NQAidGroup object.
-     *
-     * @param aids The list of AIDs present in the group
-     * @param category The category of this group, e.g. {@link CardEmulation#CATEGORY_PAYMENT}
-     */
-    public NQAidGroup(List<String> aids, String category) {
+    public NfcAidGroup(List<String> aids, String category, String description) {
         super(aids, category);
-        this.nqdescription = null;
+        this.description = description;
+        this.mStaticApduPatternGroups = new ArrayList<ApduPatternGroup>();
     }
 
-   public NQAidGroup(String category, String description) {
+    public NfcAidGroup(List<String> aids, String category) {
+        super(aids, category);
+    }
+
+    public NfcAidGroup(String category, String description) {
         super(category,description);
-        this.nqdescription = null;
-   }
-
-    public NQAidGroup(AidGroup aid) {
-        this(aid.getAids(), aid.getCategory(), null);
+        this.mStaticApduPatternGroups = new ArrayList<ApduPatternGroup>();
     }
 
-    /**
-     * @return the decription of this AID group
-     */
-    public String getDescription() {
-        return nqdescription;
+    public NfcAidGroup(AidGroup aid) {
+        this(aid.getAids(), aid.getCategory(), getDescription(aid));
     }
 
+    static String getDescription(AidGroup aid) {
+        Field[] fs = aid.getClass().getDeclaredFields();
+        for(Field f : fs) {
+            f.setAccessible(true);
+        }
+        return aid.description;
+    }
     /**
      * Creats an AidGroup object to be serialized with same AIDs
      * and same category.
@@ -107,7 +82,7 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
     }
 
     public void addApduGroup(ApduPatternGroup apdu) {
-        mStaticNQApduPatternGroups.add(apdu);
+        mStaticApduPatternGroups.add(apdu);
     }
 
     /**
@@ -117,7 +92,7 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
      */
     public ArrayList<ApduPattern> getApduPatternList() {
         final ArrayList<ApduPattern> apdulist = new ArrayList<ApduPattern>();
-        for (ApduPatternGroup group : mStaticNQApduPatternGroups) {
+        for (ApduPatternGroup group : mStaticApduPatternGroups) {
             for(ApduPattern apduPattern : group.getApduPattern()) {
                 apdulist.add(apduPattern);
             }
@@ -125,59 +100,49 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
         return apdulist;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder out = new StringBuilder("Category: " + category +
-                  ", AIDs:");
-        for (String aid : aids) {
-            out.append(aid);
-            out.append(", ");
-        }
-        return out.toString();
+    /**
+     * @return the decription of this AID group
+     */
+    public String getDescription() {
+        return description;
     }
-
-    @Override
-    public int describeContents() {
-        return 0;
-    }
-
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         super.writeToParcel(dest,flags);
-        if(nqdescription != null) {
-            dest.writeString(nqdescription);
+        if(description != null) {
+            dest.writeString(description);
         } else {
             dest.writeString(null);
         }
     }
 
-    public static final Parcelable.Creator<NQAidGroup> CREATOR =
-            new Parcelable.Creator<NQAidGroup>() {
+    public static final Parcelable.Creator<NfcAidGroup> CREATOR =
+            new Parcelable.Creator<NfcAidGroup>() {
 
         @Override
-        public NQAidGroup createFromParcel(Parcel source) {
+        public NfcAidGroup createFromParcel(Parcel source) {
             String category = source.readString();
             int listSize = source.readInt();
             ArrayList<String> aidList = new ArrayList<String>();
             if (listSize > 0) {
                 source.readStringList(aidList);
             }
-            String nqdescription = source.readString();
-            return new NQAidGroup(aidList, category, nqdescription);
+            String description = source.readString();
+            return new NfcAidGroup(aidList, category, description);
         }
 
         @Override
-        public NQAidGroup[] newArray(int size) {
-            return new NQAidGroup[size];
+        public NfcAidGroup[] newArray(int size) {
+            return new NfcAidGroup[size];
         }
     };
 
-    static public NQAidGroup createFromXml(XmlPullParser parser) throws XmlPullParserException, IOException {
+    static public NfcAidGroup createFromXml(XmlPullParser parser) throws XmlPullParserException, IOException {
         String category = null;
-        String nqdescription = null;
+        String description = null;
         ArrayList<String> aids = new ArrayList<String>();
-        NQAidGroup group = null;
+        NfcAidGroup group = null;
         boolean inGroup = false;
 
         int eventType = parser.getEventType();
@@ -196,7 +161,7 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
                     }
                 } else if (tagName.equals("aid-group")) {
                     category = parser.getAttributeValue(null, "category");
-                    nqdescription = parser.getAttributeValue(null, "description");
+                    description = parser.getAttributeValue(null, "description");
                     if (category == null) {
                         Log.e(TAG, "<aid-group> tag without valid category");
                         return null;
@@ -207,11 +172,11 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
                 }
             } else if (eventType == XmlPullParser.END_TAG) {
                 if (tagName.equals("aid-group") && inGroup) {
-                    if (aids.size() > 0) {
-                        group = new NQAidGroup(aids, category, nqdescription);
+                    if(aids.size() > 0) {
+                        group = new NfcAidGroup(aids, category, description);
                     }
                     else {
-                        group = new NQAidGroup(category, nqdescription);
+                        group = new NfcAidGroup(category, description);
                     }
                     break;
                 }
@@ -224,8 +189,8 @@ public final class NQAidGroup extends AidGroup implements Parcelable {
     public void writeAsXml(XmlSerializer out) throws IOException {
         out.startTag(null, "aid-group");
         out.attribute(null, "category", category);
-        if(nqdescription != null)
-            out.attribute(null, "description", nqdescription);
+        if(description != null)
+            out.attribute(null, "description", description);
         for (String aid : aids) {
             out.startTag(null, "aid");
             out.attribute(null, "value", aid);

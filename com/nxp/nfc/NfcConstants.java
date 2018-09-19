@@ -27,7 +27,7 @@ import android.annotation.SdkConstant.SdkConstantType;
      * This class provides the constants ID types.
      */
 
-public final class NxpConstants {
+public final class NfcConstants {
     /**
      * UICC ID to be able to select it as the default Secure Element
      */
@@ -114,7 +114,7 @@ public final class NxpConstants {
      * Broadcast Action: a transaction with a secure element has been detected.
      *
      * Always contains the extra field
-     * {@link com.nxp.nfc.NxpConstants#EXTRA_AID} and {@link com.nxp.nfc.NxpConstants#EXTRA_SOURCE}
+     * {@link com.nxp.nfc.NfcConstants#EXTRA_AID} and {@link com.nxp.nfc.NfcConstants#EXTRA_SOURCE}
      *
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
@@ -123,7 +123,7 @@ public final class NxpConstants {
 
     /**
      * Mandatory byte array extra field in
-     * {@link com.nxp.nfc.NxpConstants#ACTION_TRANSACTION_DETECTED}.
+     * {@link com.nxp.nfc.NfcConstants#ACTION_TRANSACTION_DETECTED}.
      * <p>
      * Contains the AID of the applet involved in the transaction.
      *
@@ -132,7 +132,7 @@ public final class NxpConstants {
 
     /**
      * Mandatory byte array extra field in
-     * {@link com.nxp.nfc.NxpConstants#ACTION_TRANSACTION_DETECTED}.
+     * {@link com.nxp.nfc.NfcConstants#ACTION_TRANSACTION_DETECTED}.
      * <p>
      * Contains the extra data of the applet involved in the transaction.
      *
@@ -144,7 +144,7 @@ public final class NxpConstants {
      * has been detected.
      * <p>
      * Always contains the extra field
-     * {@link com.nxp.nfc.NxpConstants#EXTRA_SOURCE}
+     * {@link com.nxp.nfc.NfcConstants#EXTRA_SOURCE}
      */
     @SdkConstant(SdkConstantType.BROADCAST_INTENT_ACTION)
     public static final String ACTION_CONNECTIVITY_EVENT_DETECTED =
@@ -152,8 +152,8 @@ public final class NxpConstants {
 
     /**
      * Mandatory string extra field in
-     * {@link com.nxp.nfc.NxpConstants#ACTION_TRANSACTION_DETECTED} and
-     * {@link com.nxp.nfc.NxpConstants#ACTION_CONNECTIVITY_EVENT_DETECTED}.
+     * {@link com.nxp.nfc.NfcConstants#ACTION_TRANSACTION_DETECTED} and
+     * {@link com.nxp.nfc.NfcConstants#ACTION_CONNECTIVITY_EVENT_DETECTED}.
      * <p>
      * Contains the event source (UICC/ESE) of the transaction.
      *
@@ -208,7 +208,6 @@ public final class NxpConstants {
     public static final String PERMISSIONS_NFC = "android.permission.NFC";
 
     public static final String ACTION_MULTI_EVT_TRANSACTION = "com.gsma.services.nfc.action.TRANSACTION_EVENT";
-    public static final String ACTION_CHECK_CERT = "org.simalliance.openmobileapi.service.ACTION_CHECK_CERT";
     public static final String ACTION_CHECK_X509 = "org.simalliance.openmobileapi.service.ACTION_CHECK_X509";
     public static final String SET_PACKAGE_NAME = "org.simalliance.openmobileapi.service";
     public static final String EXTRA_SE_NAME = "org.simalliance.openmobileapi.service.EXTRA_SE_NAME";

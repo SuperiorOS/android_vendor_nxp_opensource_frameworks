@@ -25,7 +25,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 import android.util.Log;
 import android.graphics.drawable.Drawable;
-import android.nfc.cardemulation.NQAidGroup;
+import android.nfc.cardemulation.NfcAidGroup;
 
 public class NxpOffHostService {
     public int mUserId;
@@ -35,7 +35,7 @@ public class NxpOffHostService {
     public String mPackageName = null;
     public String mServiceName = null;
     public boolean mModifiable = true;
-    public List<NQAidGroup> mNQAidGroupList = new ArrayList<NQAidGroup>();
+    public List<NfcAidGroup> mNfcAidGroupList = new ArrayList<NfcAidGroup>();
     public NxpNfcController mNxpNfcController;
     public int mBannerId;
     public Context mContext = null;

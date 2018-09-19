@@ -18,16 +18,16 @@
  *
  */
 package com.nxp.nfc.gsma.internal;
-import android.nfc.cardemulation.NQApduServiceInfo;
+import android.nfc.cardemulation.NfcApduServiceInfo;
 import android.content.Intent;
 /**
  * @hide
  */
 interface INxpNfcController {
-    boolean deleteOffHostService(int userId, String packageName, in NQApduServiceInfo service);
-    List<NQApduServiceInfo> getOffHostServices(int userId, String packageName);
-    NQApduServiceInfo getDefaultOffHostService(int userId, String packageName);
-    boolean commitOffHostService(int userId, String packageName, String serviceName, in NQApduServiceInfo service);
+    boolean deleteOffHostService(int userId, String packageName, in NfcApduServiceInfo service);
+    List<NfcApduServiceInfo> getOffHostServices(int userId, String packageName);
+    NfcApduServiceInfo getDefaultOffHostService(int userId, String packageName);
+    boolean commitOffHostService(int userId, String packageName, String serviceName, in NfcApduServiceInfo service);
     boolean enableMultiEvt_NxptransactionReception(String packageName, String seName);
     void enableMultiReception(String pkg, String seName);
 }
