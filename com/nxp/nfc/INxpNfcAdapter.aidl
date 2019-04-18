@@ -1,5 +1,5 @@
  /*
-  * Copyright (C) 2015 NXP Semiconductors
+  * Copyright (C) 2015-2019 NXP Semiconductors
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -15,7 +15,6 @@
   */
 package com.nxp.nfc;
 
-import com.nxp.nfc.gsma.internal.INxpNfcController;
 import com.nxp.nfc.INxpNfcAdapterExtras;
 import com.nxp.nfc.NfcAidServiceInfo;
 /**
@@ -23,7 +22,9 @@ import com.nxp.nfc.NfcAidServiceInfo;
  */
 interface INxpNfcAdapter
 {
-    INxpNfcController getNxpNfcControllerInterface();
+    void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
+    void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
+    void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
     List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category);
     int[] getActiveSecureElementList(String pkg);
     INxpNfcAdapterExtras getNxpNfcAdapterExtrasInterface();

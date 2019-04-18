@@ -20,4 +20,4 @@ LOCAL_DROIDDOC_USE_STANDARD_DOCLET := true
 
 # uncomment for NXP gsma-nfc-service
 # ============================================================
-include $(call all-makefiles-under,$(LOCAL_PATH))
+#include $(call all-makefiles-under,$(LOCAL_PATH))

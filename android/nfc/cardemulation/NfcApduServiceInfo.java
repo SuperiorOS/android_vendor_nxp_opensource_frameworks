@@ -1,23 +1,21 @@
 /*
- * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
- * Not a Contribution.
- *
- * Copyright (C) 2015 NXP Semiconductors
- * The original Work has been changed by NXP Semiconductors.
- * Copyright (C) 2013 The Android Open Source Project
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *      http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
+* Not a Contribution.
+*
+* Copyright (C) 2015-2019 NXP Semiconductors
+*
+* Licensed under the Apache License, Version 2.0 (the "License");
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*      http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 package android.nfc.cardemulation;
 
@@ -74,7 +72,6 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
     static final int POWER_STATE_SWITCH_ON = 1;
     static final int POWER_STATE_SWITCH_OFF = 2;
     static final int POWER_STATE_BATTERY_OFF = 4;
-    String offHostName, staticOffHostName;
 
     /**
      * The name of the meta-data element that contains
@@ -121,18 +118,16 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
    /**
      * @hide
      */
-    public NfcApduServiceInfo(ResolveInfo info, String description,
+    public NfcApduServiceInfo(ResolveInfo info, boolean onHost, String description,
             ArrayList<NfcAidGroup> staticNfcAidGroups, ArrayList<NfcAidGroup> dynamicNfcAidGroups,
             boolean requiresUnlock, int bannerResource, int uid,
-            String settingsActivityName, ESeInfo seExtension,boolean modifiable, String offHostName, String staticOffHostName){
+            String settingsActivityName, ESeInfo seExtension,boolean modifiable){
         super(info, description, nfcAidGroups2AidGroups(staticNfcAidGroups), nfcAidGroups2AidGroups(dynamicNfcAidGroups),
-                requiresUnlock, bannerResource, uid, settingsActivityName, offHostName, staticOffHostName);
+                requiresUnlock, bannerResource, uid, settingsActivityName, null,null);
         this.mModifiable = modifiable;
         this.mServiceState = NfcConstants.SERVICE_STATE_ENABLING;
         this.mStaticNfcAidGroups = new HashMap<String, NfcAidGroup>();
         this.mDynamicNfcAidGroups = new HashMap<String, NfcAidGroup>();
-        this.offHostName = offHostName;
-        this.staticOffHostName = staticOffHostName;
         if(staticNfcAidGroups != null) {
             for (NfcAidGroup nfcAidGroup : staticNfcAidGroups) {
                 this.mStaticNfcAidGroups.put(nfcAidGroup.getCategory(), nfcAidGroup);
@@ -406,13 +401,6 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         return groups;
     }
 
-    public String getOffHostName() {
-        return offHostName;
-    }
-
-    public String getStaticOffHostName() {
-        return staticOffHostName;
-    }
 
     /**
      * This is a convenience function to create an ApduServiceInfo object of the current
@@ -426,7 +414,7 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         return new ApduServiceInfo(this.getResolveInfo(), this.getDescription(),
             nfcAidGroups2AidGroups(this.getStaticNfcAidGroups()), nfcAidGroups2AidGroups(this.getDynamicNfcAidGroups()),
             this.requiresUnlock(), this.getBannerId(), this.getUid(),
-            this.getSettingsActivityName(), this.getOffHostName(), this.getStaticOffHostName());
+            this.getSettingsActivityName(), null, null);
     }
 
     /**
@@ -631,6 +619,7 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
     public void writeToParcel(Parcel dest, int flags) {
         mService.writeToParcel(dest, flags);
         dest.writeString(mDescription);
+        dest.writeInt(mOnHost ? 1 : 0);
         dest.writeInt(mStaticNfcAidGroups.size());
         if (mStaticNfcAidGroups.size() > 0) {
             dest.writeTypedList(new ArrayList<NfcAidGroup>(mStaticNfcAidGroups.values()));
@@ -647,8 +636,6 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         dest.writeByteArray(mByteArrayBanner);
         dest.writeInt(mModifiable ? 1 : 0);
         dest.writeInt(mServiceState);
-        dest.writeString(offHostName);
-        dest.writeString(staticOffHostName);
     };
 
     public static final Parcelable.Creator<NfcApduServiceInfo> CREATOR =
@@ -657,6 +644,7 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         public NfcApduServiceInfo createFromParcel(Parcel source) {
             ResolveInfo info = ResolveInfo.CREATOR.createFromParcel(source);
             String description = source.readString();
+            boolean onHost = source.readInt() != 0;
             ArrayList<NfcAidGroup> staticNfcAidGroups = new ArrayList<NfcAidGroup>();
             int numStaticGroups = source.readInt();
             if (numStaticGroups > 0) {
@@ -675,11 +663,9 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
             byte[] byteArrayBanner = new byte[]{0};
             byteArrayBanner = source.createByteArray();
             boolean modifiable = source.readInt() != 0;
-            String offHostName = source.readString();
-            String staticOffHostName = source.readString();
-            NfcApduServiceInfo service = new NfcApduServiceInfo(info, description, staticNfcAidGroups,
+            NfcApduServiceInfo service = new NfcApduServiceInfo(info, onHost, description, staticNfcAidGroups,
                     dynamicNfcAidGroups, requiresUnlock, bannerResource, uid,
-                    settingsActivityName, seExtension, modifiable, offHostName, staticOffHostName);
+                    settingsActivityName, seExtension, modifiable);
             service.setServiceState(CardEmulation.CATEGORY_OTHER, source.readInt());
             return service;
         }
