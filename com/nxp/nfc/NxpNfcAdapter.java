@@ -211,7 +211,7 @@ public final class NxpNfcAdapter {
     /**
      * @hide
      */
-    private static INxpNfcAdapter getNxpNfcAdapterInterface() {
+    public static INxpNfcAdapter getNxpNfcAdapterInterface() {
         if (sService == null) {
             throw new UnsupportedOperationException("You need a reference from NfcAdapter to use the "
                     + " NXP NFC APIs");
