@@ -245,6 +245,34 @@ public final class NxpNfcAdapter {
         Log.e(TAG, "changeDiscoveryTech failed", e);
       }
     }
+
+    /**
+     * This API is called by application to execute the analog self test
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.
+     * <li>This api shall be called only Nfcservice is enabled.
+     * </ul>
+     * @param  type, type of the analog slef test
+     * @return status
+     * @throws IOException If a failure occurred during nfcSelfTest
+     * @hide
+     */
+    public int nfcSelfTest(int type) throws IOException {
+        int status = 0xFF;
+        if (sNxpService == null) {
+        throw new UnsupportedOperationException(
+            "You need a context on NxpNfcAdapter to use the "
+            + " NXP NFC extras APIs");
+        }
+        try {
+            status = sNxpService.nfcSelfTest(type);
+        } catch(RemoteException e) {
+            Log.e(TAG, "RemoteException in nfcSelfTest(): ", e);
+            e.printStackTrace();
+            attemptDeadServiceRecovery(e);
+            throw new IOException("RemoteException in nfcSelfTest()");
+        }
+        return status;
+    }
     /**
      * @hide
      */
@@ -648,6 +676,97 @@ public final class NxpNfcAdapter {
         e.printStackTrace();
         attemptDeadServiceRecovery(e);
         return false;
+      }
+    }
+
+    /**
+     * This api is called by applications to Activate Secure Element Interface.
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only Nfcservice is enabled.
+     * </ul>
+     * @return whether  the update of configuration is
+     *          success or not.
+     *          0x03 - failure
+     *          0x00 - success
+     *          0xFF - Service Unavialable
+     * @throws  IOException if any exception occurs during setting the NFC
+     * configuration.
+     */
+    public int activateSeInterface() throws IOException {
+      try {
+        return sNxpService.activateSeInterface();
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0xFF;
+      }
+    }
+    /**
+     * This api is called by applications to Deactivate Secure Element Interface.
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only Nfcservice is enabled.
+     * </ul>
+     * @return whether  the update of configuration is
+     *          success or not.
+     *          0x03 - failure
+     *          0x00 - success
+     *          0xFF - Service Unavialable
+     * @throws  IOException if any exception occurs during setting the NFC
+     * configuration.
+     */
+    public int deactivateSeInterface() throws IOException {
+      try {
+        return sNxpService.deactivateSeInterface();
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0xFF;
+      }
+    }
+
+    /**
+     * This API performs writes of T4T data to Nfcee.
+     * @param fileId File Id to which to write
+     * @param data data bytes to be written
+     * @param length current data length
+     * @return number of bytes written if success else negative number of
+                error code listed as here .
+                -1  STATUS_FAILED
+                -2  ERROR_RF_ACTIVATED
+                -3  ERROR_MPOS_ON
+                -4  ERROR_NFC_NOT_ON
+                -5  ERROR_INVALID_FILE_ID
+                -6  ERROR_INVALID_LENGTH
+                -7  ERROR_CONNECTION_FAILED
+                -8  ERROR_EMPTY_PAYLOAD
+                -9  ERROR_NDEF_VALIDATION_FAILED
+     * <p>Requires {@link   android.Manifest.permission#NFC} permission.
+     */
+    public int doWriteT4tData(byte[] fileId, byte[] data, int length) {
+      try {
+        return sNxpService.doWriteT4tData(fileId, data, length);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return -1;
+      }
+    }
+
+    /**
+     * This API performs reading of T4T content of Nfcee.
+     * @param fileId : File Id from which to read
+     * @return read bytes :-Returns read message if success
+     *                      Returns null if failed to read
+     *                      Returns 0xFF if file is empty.
+     * <p>Requires {@link   android.Manifest.permission#NFC} permission.
+     */
+    public byte[] doReadT4tData(byte[] fileId) {
+      try {
+        return sNxpService.doReadT4tData(fileId);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return null;
       }
     }
 }
