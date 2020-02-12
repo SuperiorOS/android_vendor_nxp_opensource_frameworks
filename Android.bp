@@ -5,6 +5,7 @@ java_library {
     name: "com.nxp.nfc.nq",
     installable: true,
     required: ["com.nxp.nfc.nq.xml"],
+    system_ext_specific: true,
 
     srcs: [
         "com/**/I*.aidl",
@@ -17,6 +18,7 @@ java_library {
 prebuilt_etc {
     name: "com.nxp.nfc.nq.xml",
     src: "com.nxp.nfc.nq.xml",
+    system_ext_specific: true,
     // Install to /system/etc/permissions
     sub_dir: "permissions",
 }
