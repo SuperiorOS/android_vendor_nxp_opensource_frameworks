@@ -1,24 +1,22 @@
 /*
-* Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
-* Not a Contribution.
-*
-*  The original Work has been changed by NXP Semiconductors.
-*
-*  Copyright (C) 2013-2019 NXP Semiconductors
-*
-*  Licensed under the Apache License, Version 2.0 (the "License");
-*  you may not use this file except in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*  http://www.apache.org/licenses/LICENSE-2.0
-*
-*  Unless required by applicable law or agreed to in writing, software
-*  distributed under the License is distributed on an "AS IS" BASIS,
-*  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*  See the License for the specific language governing permissions and
-*  limitations under the License.
-*
-*/
+ *
+ *  The original Work has been changed by NXP Semiconductors.
+ *
+ *  Copyright (C) 2013-2020 NXP Semiconductors
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ */
 package com.nxp.nfc;
 
 import java.util.HashMap;
@@ -32,6 +30,7 @@ import android.os.ServiceManager;
 import java.io.IOException;
 import android.os.UserHandle;
 import android.os.RemoteException;
+import android.annotation.RequiresPermission;
 
 import android.util.Log;
 import java.util.List;
@@ -183,6 +182,40 @@ public final class NxpNfcAdapter {
         throw new IOException("confMifareCLT failed");
       }
     }
+
+     /**
+      * Set listen mode routing table configuration for NfcFRouteSet.
+      * routeLoc is parameter which fetch the text from UI and compare
+      * <p>Requires {@link android.Manifest.permission#NFC} permission.
+      *
+      * @throws IOException If a failure occurred during Felica Techno Route set.
+      */
+     public void NfcFRouteSet(String routeLoc, boolean fullPower,
+                                   boolean lowPower, boolean noPower)
+         throws IOException {
+       try {
+         int seID = 0;
+         boolean result = false;
+         if (routeLoc.equals(NfcConstants.UICC_ID)) {
+           seID = NfcConstants.UICC_ID_TYPE;
+         } else if (routeLoc.equals(NfcConstants.UICC2_ID)) {
+           seID = NfcConstants.UICC2_ID_TYPE;
+         } else if (routeLoc.equals(NfcConstants.SMART_MX_ID)) {
+           seID = NfcConstants.SMART_MX_ID_TYPE;
+         } else if (routeLoc.equals(NfcConstants.HOST_ID)) {
+           seID = NfcConstants.HOST_ID_TYPE;
+         } else {
+           Log.e(TAG, "confNfcF: wrong default route ID");
+           throw new IOException("confNfcF failed: Wrong default route ID");
+         }
+         sNxpService.NfcFRouteSet(seID, fullPower, lowPower, noPower);
+       } catch (RemoteException e) {
+         Log.e(TAG, "confNfcF failed", e);
+         attemptDeadServiceRecovery(e);
+         throw new IOException("confNfcF failed");
+       }
+     }
+
     /**
      * This api returns the CATEGORY_OTHER (non Payment)Services registered by
      * the user along with the size of the registered aid group. This api has to
@@ -310,15 +343,17 @@ public final class NxpNfcAdapter {
      *          MPOS_STATUS_SUCCESS
      * @throws IOException If a failure occurred during reader mode set or reset
      */
-    public int mPOSSetReaderMode (String pkg, boolean on) throws IOException {
-        try {
-            return sNxpService.mPOSSetReaderMode(pkg, on);
-        } catch(RemoteException e) {
-            Log.e(TAG, "RemoteException in mPOSSetReaderMode (int state): ", e);
-            e.printStackTrace();
-            attemptDeadServiceRecovery(e);
-            throw new IOException("RemoteException in mPOSSetReaderMode (int state)");
-        }
+    @RequiresPermission(android.Manifest.permission.NFC)
+    public int mPOSSetReaderMode(String pkg, boolean on) throws IOException {
+      try {
+        return sNxpService.mPOSSetReaderMode(pkg, on);
+      } catch (RemoteException e) {
+        Log.e(TAG, "RemoteException in mPOSSetReaderMode (int state): ", e);
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        throw new IOException(
+            "RemoteException in mPOSSetReaderMode (int state)");
+      }
     }
 
     /**
@@ -332,15 +367,47 @@ public final class NxpNfcAdapter {
      *          FALSE if reader mode is not started
      * @throws IOException If a failure occurred during reader mode set or reset
      */
-    public boolean mPOSGetReaderMode (String pkg) throws IOException {
-        try {
-            return sNxpService.mPOSGetReaderMode(pkg);
-        } catch(RemoteException e) {
-            Log.e(TAG, "RemoteException in mPOSGetReaderMode (): ", e);
-            e.printStackTrace();
-            attemptDeadServiceRecovery(e);
-            throw new IOException("RemoteException in mPOSSetReaderMode ()");
-        }
+    @RequiresPermission(android.Manifest.permission.NFC)
+    public boolean mPOSGetReaderMode(String pkg) throws IOException {
+      try {
+        return sNxpService.mPOSGetReaderMode(pkg);
+      } catch (RemoteException e) {
+        Log.e(TAG, "RemoteException in mPOSGetReaderMode (): ", e);
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        throw new IOException("RemoteException in mPOSGetReaderMode ()");
+      }
+    }
+
+    /**
+     * This is the first API to be called to configure the SCR mode
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.
+     * <li>This api shall be called only Nfcservice is enabled.
+     * <li>This api shall be called only when there are no NFC transactions
+     * ongoing
+     * </ul>
+     * @param  on Sets/Resets the Secure Reader state.
+     * @param  Requested reader type. e.g. Mifare Classic Reader("MFC")
+     * @return whether the update of state is
+     *          success or busy or fail or rejected.
+     *          SCR_STATUS_BUSY
+     *          SCR_STATUS_REJECTED
+     *          SCR_STATUS_SUCCESS
+     *          SCR_STATUS_FAILED
+     * @throws IOException If a failure occurred during reader mode set or reset
+     */
+    @RequiresPermission(android.Manifest.permission.NFC)
+    public int configureSecureReader(boolean on, String readerType)
+        throws IOException {
+      try {
+        return sNxpService.configureSecureReader(on, readerType);
+      } catch (RemoteException e) {
+        Log.e(TAG, "RemoteException in configureSecureReader (int state): ", e);
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        throw new IOException(
+            "RemoteException in configureSecureReader (int state)");
+      }
     }
 
     /**

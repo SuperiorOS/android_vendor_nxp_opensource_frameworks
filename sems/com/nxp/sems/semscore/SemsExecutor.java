@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 NXP
+ * Copyright 2019-2020 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -603,6 +603,8 @@ public class SemsExecutor {
           case SEMS_STATE_SELECT: {
             status = SelectSems();
             if (status != SemsStatus.SEMS_STATUS_SUCCESS) {
+              closeLogicalChannel(channelNumber);
+              updateSemsStatus(sw6987);
               return Arrays.copyOfRange(rapduSelect, rapduSelect.length - 2,
                                         rapduSelect.length);
             }
@@ -716,7 +718,9 @@ public class SemsExecutor {
           rapdu = sendProcessScript(channelNumber, secCmd);
           if (rapdu == null) {
             Log.e(TAG, "sendProcessScript received incorrect rapdu");
-            return stat;
+            putIntoLog(sw6987, ErrorResponse);
+            rapdu = sw6987;
+            break;
           }
           sw = SemsUtil.getSW(rapdu);
           if (sw == (short)0x6310) {
@@ -808,7 +812,12 @@ public class SemsExecutor {
 
         /* Re-select the LS Application. (FIXME: may be removed because
          * there may be an issue in the LS Applet)*/
-        selectApplication(channelNumber, AID_MEM);
+        rapdu = selectApplication(channelNumber, AID_MEM);
+        if(rapdu == null) {
+          putIntoLog(sw6987, ErrorResponse);
+          rapdu = sw6987;
+          break;
+        }
         mState = SEMS_STATE_STORE_DATA;
         break;
       }
@@ -960,20 +969,31 @@ public class SemsExecutor {
     SemsStatus stat = SemsStatus.SEMS_STATUS_FAILED;
     Log.d(TAG, "Select SEMS Application");
     rapduSelect = selectApplication(channelNumber, AID_MEM);
+    if (rapduSelect == null) {
+      Log.e(TAG, "SEMS-select failed");
+      return stat;
+    }
     if (SemsUtil.getSW(rapduSelect) != (short)0x9000) {
       if ((SemsUtil.getSW(rapduSelect) == (short)0x6999) ||
           (SemsUtil.getSW(rapduSelect) == (short)0x6A82)) {
         rapduSelect = selectApplication(channelNumber, SEMS_APP_AID);
+        if (rapduSelect == null) {
+          Log.e(TAG, "SEMS-select failed");
+          return stat;
+        }
         if ((SemsUtil.getSW(rapduSelect) == (short)0x6999) ||
             (SemsUtil.getSW(rapduSelect) == (short)0x6A82)) {
           rapduSelect = selectApplication(channelNumber, SEMS_UPD_APP_AID);
+          if (rapduSelect == null) {
+            Log.e(TAG, "SEMS-select failed");
+            return stat;
+          }
           if (SemsUtil.getSW(rapduSelect) == (short)0x9000) {
             AID_MEM = SEMS_UPD_APP_AID;
             stat = SemsStatus.SEMS_STATUS_SUCCESS;
           } else {
             Log.e(TAG, "SEMS/SEMS-updater not found");
-            closeLogicalChannel(channelNumber);
-            updateSemsStatus(rapduSelect);
+            return stat;
           }
         } else {
           if (SemsUtil.getSW(rapduSelect) == (short)0x9000) {
@@ -981,14 +1001,12 @@ public class SemsExecutor {
             stat = SemsStatus.SEMS_STATUS_SUCCESS;
           } else {
             Log.e(TAG, "SEMS/SEMS-updater not found");
-            closeLogicalChannel(channelNumber);
-            updateSemsStatus(rapduSelect);
+            return stat;
           }
         }
       } else {
         Log.e(TAG, "SEMS/SEMS-updater select failed");
-        closeLogicalChannel(channelNumber);
-        updateSemsStatus(rapduSelect);
+        return stat;
       }
     } else {
       stat = SemsStatus.SEMS_STATUS_SUCCESS;
@@ -1041,6 +1059,9 @@ public class SemsExecutor {
     rapdu = sendAuthenticationFrame(channelNumber, authFrame.getValue());
     if (rapdu == null) {
       Log.e(TAG, "sendAuthenticationFrame received incorrect rapdu");
+      closeLogicalChannel(channelNumber);
+      putIntoLog(sw6987, ErrorResponse);
+      updateSemsStatus(sw6987);
       return stat;
     }
     putIntoLog(rapdu, SemsAuthResponse);

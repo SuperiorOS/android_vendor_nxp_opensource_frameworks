@@ -1,5 +1,5 @@
  /*
-  * Copyright (C) 2015-2019 NXP Semiconductors
+  * Copyright (C) 2015-2020 NXP Semiconductors
   *
   * Licensed under the Apache License, Version 2.0 (the "License");
   * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ interface INxpNfcAdapter
     void DefaultRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
     void MifareDesfireRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
     void MifareCLTRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
+    void NfcFRouteSet(int routeLoc, boolean fullPower, boolean lowPower, boolean noPower);
     List<NfcAidServiceInfo> getServicesAidInfo(int userId, String category);
     int[] getActiveSecureElementList(String pkg);
     INxpNfcAdapterExtras getNxpNfcAdapterExtrasInterface();
@@ -49,4 +50,5 @@ interface INxpNfcAdapter
     int doWriteT4tData(in byte[] fileId, in byte[] data, int length);
     byte[] doReadT4tData(in byte[] fileId);
     int nfcSelfTest(int type);
+    int configureSecureReader(boolean on, String readerType);
 }
