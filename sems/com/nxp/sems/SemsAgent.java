@@ -30,6 +30,7 @@ import com.nxp.sems.SemsException;
 import com.nxp.sems.SemsExecutor;
 import com.nxp.sems.ISemsCallback;
 import com.nxp.sems.SemsStatus;
+import com.nxp.sems.SemsExecutionStatus;
 
 public final class SemsAgent {
   public static final String TAG = "SEMS-SemsAgent";
@@ -39,13 +40,15 @@ public final class SemsAgent {
   public static final byte SEMS_STATUS_DENIED = 0x03;
   public static final byte SEMS_STATUS_UNKNOWN = 0x0F;
   public static final short major = 0;
-  public static final short minor = 9;
+  public static final short minor = 10;
 
   private static SemsAgent sInstance;
   private static Context sContext = null;
   private static byte sTerminalID = 0;
   private ISemsApduChannel mSemsApduChannel = null;
   private SemsExecutor mExecutor = null;
+  public static Object semsObj = new Object();
+  public static boolean flagSemsObj = false;
 
   /**
    * Returns SemsAgent singleton object
@@ -94,6 +97,42 @@ public final class SemsAgent {
         mExecutor.executeScript(inputScriptBuffer, outputFilename, callback);
     if (status == SemsStatus.SEMS_STATUS_SUCCESS) {
       return SEMS_STATUS_SUCCESS;
+    } else {
+      return SEMS_STATUS_FAILED;
+    }
+  }
+
+  /**
+   * Perform secure SEMS script execution synchronously
+   * <br/>
+   * inputScript : The Input secure script buffer in string format,
+   * fileName : Output response storage file name
+   * @param void
+   *
+   * @return {@code status} 0 in SUCCESS, otherwise
+   *                        1 in SEMS status Failed
+   *                        2 in SEMS status Busy
+   *                        3 in SEMS status denied
+   *                     0x0f in Unknown error.
+   */
+  public int SemsExecuteScript(String inputScriptBuffer, String outputFilename)
+      throws SemsException {
+    SemsExecutionStatus.mSemsExecutionStatus = SEMS_STATUS_FAILED;
+    int status = SemsExecuteScript(inputScriptBuffer, outputFilename,
+                                   new SemsExecutionStatus());
+    if (status == SEMS_STATUS_SUCCESS) {
+      synchronized (semsObj) {
+        while (!flagSemsObj) {
+          try {
+            semsObj.wait();
+          } catch (InterruptedException e) {
+            Log.e(TAG, "Wait on SEMS script Execution failed");
+          }
+        }
+        flagSemsObj = false;
+      }
+
+      return SemsExecutionStatus.mSemsExecutionStatus;
     } else {
       return SEMS_STATUS_FAILED;
     }

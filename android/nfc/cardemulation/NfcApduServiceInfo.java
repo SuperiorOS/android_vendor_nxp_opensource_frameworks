@@ -2,7 +2,7 @@
 * Copyright (c) 2015-2016, The Linux Foundation. All rights reserved.
 * Not a Contribution.
 *
-* Copyright (C) 2015-2019 NXP Semiconductors
+* Copyright (C) 2015-2020 NXP Semiconductors
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -56,8 +56,9 @@ import android.graphics.BitmapFactory;
 /**
  * @hide
  */
-public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
-    static final String TAG = "NfcApduServiceInfo";
+public final class NfcApduServiceInfo
+    extends ApduServiceInfo implements Parcelable {
+  static final String TAG = "NfcApduServiceInfo";
 
   // name of secure element
   static final String SECURE_ELEMENT_ESE = "eSE";
@@ -110,6 +111,8 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
    */
   int mServiceState;
 
+  /*Holds value of statically defined (in application xml) secureElementName of offHostService*/
+  static String mNfcStaticOffHostName;
   /**
    * nxp se extension
    */
@@ -165,6 +168,19 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         if (parser == null) {
           throw new XmlPullParserException(
               "No " + OffHostApduService.SERVICE_META_DATA + " meta-data");
+        }
+        AttributeSet attrs = Xml.asAttributeSet(parser);
+        Resources res = pm.getResourcesForApplication(si.applicationInfo);
+        TypedArray sa =
+            res.obtainAttributes(attrs, com.android.internal.R.styleable.OffHostApduService);
+        mNfcStaticOffHostName =
+            sa.getString(com.android.internal.R.styleable.OffHostApduService_secureElementName);
+        if (mNfcStaticOffHostName != null) {
+          if (mNfcStaticOffHostName.equals("eSE")) {
+            mNfcStaticOffHostName = "eSE1";
+          } else if (mNfcStaticOffHostName.equals("SIM")) {
+            mNfcStaticOffHostName = "SIM1";
+          }
         }
 
         /* load se extension xml */
@@ -372,7 +388,7 @@ public class NfcApduServiceInfo extends ApduServiceInfo implements Parcelable {
         nfcAidGroups2AidGroups(this.getStaticNfcAidGroups()),
         nfcAidGroups2AidGroups(this.getDynamicNfcAidGroups()),
         this.requiresUnlock(), this.getBannerId(), this.getUid(),
-        this.getSettingsActivityName(), null, null);
+        this.getSettingsActivityName(), this.getOffHostSecureElement(), mNfcStaticOffHostName);
   }
 
   /**
