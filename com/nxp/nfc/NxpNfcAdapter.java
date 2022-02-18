@@ -110,6 +110,7 @@ public final class NxpNfcAdapter {
      */
     private static void attemptDeadServiceRecovery(Exception e) {
         Log.e(TAG, "Service dead - attempting to recover",e);
+        sIsInitialized = false;
         INfcAdapter service = getServiceInterface();
         if (service == null) {
             Log.e(TAG, "could not retrieve NFC service during service recovery");
@@ -121,6 +122,9 @@ public final class NxpNfcAdapter {
         // and on a well-behaved system should never happen
         sService = service;
         sNxpService = getNxpNfcAdapterInterface();
+        if (sNxpService != null) {
+            sIsInitialized = true;
+        }
         return;
     }
     /**
@@ -558,24 +562,6 @@ public final class NxpNfcAdapter {
       }
     }
 
-    public byte[] readerPassThruMode(byte status, byte modulationTyp)
-        throws IOException {
-      try {
-        return sNxpService.readerPassThruMode(status, modulationTyp);
-      } catch (RemoteException e) {
-        Log.e(TAG, "Remote exception in readerPassThruMode(): ", e);
-        throw new IOException("Remote exception in readerPassThruMode()");
-      }
-    }
-
-    public byte[] transceiveAppData(byte[] data) throws IOException {
-      try {
-        return sNxpService.transceiveAppData(data);
-      } catch (RemoteException e) {
-        Log.e(TAG, "RemoteException in transceiveAppData(): ", e);
-        throw new IOException("RemoteException in transceiveAppData()");
-      }
-    }
     /**
      * This api is called by applications to update the NFC configurations which
      * are already part of libnfc-nxp.conf and libnfc-brcm.conf <p>Requires
@@ -698,6 +684,84 @@ public final class NxpNfcAdapter {
     }
 
     /**
+     * This api is called by applications to start RSSI mode.
+     * Once RSSI is enabled, RSSI data notifications are broadcasted to registered
+     * application when the device is in the reader field. Application can then
+     * analyze this data and find best position for transaction.
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only after Nfcservice is enabled.
+
+     * </ul>
+     * @param  rssiNtfTimeIntervalInMillisec to set time interval between RSSI
+     * notification in milliseconds. It is recommended that this value is
+     * greater than 10 millisecs and multiple of 10.
+     * @return whether  the update of configuration is
+     *          success or not with reason.
+     *          0x01  - NFC_IS_OFF,
+     *          0x02  - NFC_BUSY_IN_MPOS
+     *          0x03  - ERROR_UNKNOWN
+     *          0x00  - SUCCESS
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public int startRssiMode(int rssiNtfTimeIntervalInMillisec) {
+      try {
+        return sNxpService.startRssiMode(rssiNtfTimeIntervalInMillisec);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0x03; /*ERROR_UNKNOWN*/
+      }
+    }
+
+    /**
+     * This api is called by applications to stop RSSI mode
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only after Nfcservice is enabled.
+
+     * </ul>
+     * @param  None
+     * @return whether  the update of configuration is
+     *          success or not with reason.
+     *          0x01  - NFC_IS_OFF,
+     *          0x02  - NFC_BUSY_IN_MPOS
+     *          0x03  - ERROR_UNKNOWN
+     *          0x00  - SUCCESS
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public int stopRssiMode() {
+      try {
+        return sNxpService.stopRssiMode();
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0x03; /*ERROR_UNKNOWN*/
+      }
+    }
+
+    /**
+     * This api is called by applications to check whether RSSI is enabled or not
+     * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
+     * <li>This api shall be called only after Nfcservice is enabled.
+
+     * </ul>
+     * @param  None
+     * @return whether  the feature is enabled(true) disabled (false)
+     *          success or not.
+     *          Enabled  - true
+     *          Disabled - false
+     * @throws  IOException if any exception occurs during setting the NFC configuration.
+     */
+    public boolean isRssiEnabled() {
+      try {
+        return sNxpService.isRssiEnabled();
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return false;
+      }
+    }
+
+    /**
      * This api is called by applications to Activate Secure Element Interface.
      * <p>Requires {@link android.Manifest.permission#NFC} permission.<ul>
      * <li>This api shall be called only Nfcservice is enabled.
@@ -785,6 +849,46 @@ public final class NxpNfcAdapter {
         e.printStackTrace();
         attemptDeadServiceRecovery(e);
         return null;
+      }
+    }
+    /**
+     * This API starts extended field detect mode.
+     * @param detectionTimeout : The time after 1st RF ON to
+     *                            exit extended filed detect mode(msec).
+     * @return status     :-0x00 :EFDSTATUS_SUCCESS
+     *                      0x01 :EFDSTATUS_FAILED
+     *                      0x02 :EFDSTATUS_ERROR_ALREADY_STARTED
+     *                      0x03 :EFDSTATUS_ERROR_FEATURE_NOT_SUPPORTED
+     *                      0x04 :EFDSTATUS_ERROR_FEATURE_DISABLED_IN_CONFIG
+     *                      0x05 :EFDSTATUS_ERROR_NFC_IS_OFF
+     *                      0x06 :EFDSTATUS_ERROR_UNKNOWN
+     * <p>Requires {@link   android.Manifest.permission#NFC} permission.
+     */
+    public int startExtendedFieldDetectMode(int detectionTimeout) {
+      try {
+        return sNxpService.startExtendedFieldDetectMode(detectionTimeout);
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0x06; /*EFDSTATUS_ERROR_UNKNOWN*/
+      }
+    }
+    /**
+     * This API stops extended field detect mode.
+     * @return status     :-0x00 :EFDSTATUS_SUCCESS
+     *                      0x01 :EFDSTATUS_FAILED
+     *                      0x05 :EFDSTATUS_ERROR_NFC_IS_OFF
+     *                      0x06 :EFDSTATUS_ERROR_UNKNOWN
+     *                      0x07 :EFDSTATUS_ERROR_NOT_STARTED
+     * <p>Requires {@link   android.Manifest.permission#NFC} permission.
+     */
+    public int stopExtendedFieldDetectMode() {
+      try {
+        return sNxpService.stopExtendedFieldDetectMode();
+      } catch (RemoteException e) {
+        e.printStackTrace();
+        attemptDeadServiceRecovery(e);
+        return 0x06; /*EFDSTATUS_ERROR_UNKNOWN*/
       }
     }
 }

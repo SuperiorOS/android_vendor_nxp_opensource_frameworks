@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 NXP
+ * Copyright 2019,2021 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,6 +90,19 @@ public class SemsUtil {
     sha1.reset();
     sha1.update(in);
     return sha1.digest();
+  }
+
+  public static byte[] SHA256(byte[] in) {
+    MessageDigest sha256 = null;
+    try {
+      sha256 = MessageDigest.getInstance("SHA256");
+    } catch (Exception e) {
+      System.err.println("SHA-256 not supported");
+      System.exit(1);
+    }
+    sha256.reset();
+    sha256.update(in);
+    return sha256.digest();
   }
 
   public static byte[] toUTF8(String s) {
