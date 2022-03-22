@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 NXP
+ * Copyright 2019-2022 NXP
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,11 @@ public final class SemsAgent {
   public static final byte SEMS_STATUS_BUSY = 0x02;
   public static final byte SEMS_STATUS_DENIED = 0x03;
   public static final byte SEMS_STATUS_UNKNOWN = 0x0F;
+  public static final byte SEMS_STATUS_HASH_INVALID = 0x04;
+  public String SEMS_HASH_TYPE_SHA1   = "SHA1";
+  public String SEMS_HASH_TYPE_SHA256 = "SHA256";
   public static final short major = 1;
-  public static final short minor = 1;
+  public static final short minor = 3;
 
   private static final byte DEFAULT_TERMINAL_ID = 1;
   private static SemsAgent sInstance;
@@ -50,7 +53,6 @@ public final class SemsAgent {
   private SemsExecutor mExecutor = null;
   public static Object semsObj = new Object();
   public static boolean flagSemsObj = false;
-
   /**
    * Returns SemsAgent singleton object
    * <br/>
@@ -63,14 +65,16 @@ public final class SemsAgent {
     if (context == null) {
       throw new SemsException("Context information invalid/null");
     }
-    if (sInstance == null) {
-      synchronized (SemsAgent.class) { sInstance = new SemsAgent(); }
+    synchronized (SemsAgent.class) {
+      if (sInstance == null) {
+        sInstance = new SemsAgent();
+      }
+      if (context != sContext) {
+        sContext = context;
+      }
+      Log.d(TAG, "Sems Agent version " + major + "." + minor);
+      return sInstance;
     }
-    if (context != sContext) {
-      sContext = context;
-    }
-    Log.d(TAG, "Sems Agent version " + major + "." + minor);
-    return sInstance;
   }
 
   private SemsAgent() {}
@@ -197,6 +201,52 @@ public final class SemsAgent {
       return mExecutor.getLastSemsExecuteStatus();
     } catch (Exception e) {
       throw new SemsException("Unable to get last sems execute status");
+    }
+  }
+
+  /**
+   * Get Hash type of the algorithm execution.
+   * <br/>
+   * Returns response SHAType to Application
+   * From SEMS
+   *
+   * @return Hash algorithm type used by SEMS
+   * script.
+   */
+  public String GetHashAlgorithm() throws SemsException {
+    Log.d(TAG, "GetHashAlgorithm");
+    try {
+      mSemsApduChannel = SemsApduChannelFactory.getInstance(
+          SemsApduChannelFactory.OMAPI_CHANNEL, sContext, sTerminalID);
+      mExecutor = SemsExecutor.getInstance(mSemsApduChannel, sContext);
+      return mExecutor.getHashAlgorithm();
+    } catch (Exception e) {
+      throw new SemsException("Unable to get Hash type");
+    }
+  }
+
+  /**
+   * Set Hash type of the algorithm execution.
+   * <br/>
+   * Set response SHAType to Application
+   * From SEMS
+   * @param Hash algorithm type used by SEMS
+   * to set
+   * @return {@code status} 0 in SUCCESS, otherwise SEMS_STATUS_HASH_INVALID in failure
+   */
+  public int SetHashAlgorithm(String semsHashAlgoType) throws SemsException {
+    Log.d(TAG, "SetHashAlgorithm");
+    try {
+      if ((semsHashAlgoType != SEMS_HASH_TYPE_SHA1)
+          && (semsHashAlgoType != SEMS_HASH_TYPE_SHA256)) {
+        return SEMS_STATUS_HASH_INVALID;
+      }
+      mSemsApduChannel = SemsApduChannelFactory.getInstance(
+          SemsApduChannelFactory.OMAPI_CHANNEL, sContext, sTerminalID);
+      mExecutor = SemsExecutor.getInstance(mSemsApduChannel, sContext);
+      return mExecutor.setHashAlgorithm(semsHashAlgoType);
+    } catch (Exception e) {
+      throw new SemsException("Unable to set Hash type");
     }
   }
 }
